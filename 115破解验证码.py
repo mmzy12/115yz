@@ -1,0 +1,74 @@
+import time
+from p115 import P115Client
+from typing import Callable, cast
+from collections import defaultdict
+from concurrenttools import thread_pool_batch
+
+# 需填写内容
+# 传入 cookie
+cookie = "UID="
+
+client = P115Client(cookie)  # 使用cookie创建115网盘客户端
+
+def crack_captcha(
+    client: str | P115Client, 
+    sample_count: int = 16, 
+    crack: None | Callable[[bytes], str] = None, 
+) -> bool:
+    global CAPTCHA_CRACK
+    if crack is None:
+        try:
+            crack = CAPTCHA_CRACK
+        except NameError:
+            try:
+                from ddddocr import DdddOcr
+            except ImportError:
+                from subprocess import run
+                from sys import executable
+                run([executable, "-m", "pip", "install", "-U", "ddddocr==1.4.11"], check=True)
+                from ddddocr import DdddOcr
+            crack = CAPTCHA_CRACK = cast(Callable[[bytes], str], DdddOcr(show_ad=False).classification)
+    if isinstance(client, str):
+        client = P115Client(client)
+    while True:
+        captcha = crack(client.captcha_code())
+        if len(captcha) == 4 and all("\u4E00" <= char <= "\u9FFF" for char in captcha):
+            break
+    ls: list[defaultdict[str, int]] = [defaultdict(int) for _ in range(10)]
+    def crack_single(i, submit):
+        try:
+            char = crack(client.captcha_single(i))
+            if len(char) == 1 and "\u4E00" <= char <= "\u9FFF":
+                ls[i][char] += 1
+            else:
+                submit(i)
+        except:
+            submit(i)
+    thread_pool_batch(crack_single, (i for i in range(10) for _ in range(sample_count)))
+    l: list[str] = [max(d, key=lambda k: d[k]) for d in ls]
+    try:
+        code = "".join(str(l.index(char)) for char in captcha)
+    except ValueError:
+        return False
+    resp = client.captcha_verify(code)
+    return resp["state"]
+
+def check_and_crack_captcha():
+    # 检测是否存在验证码，如果存在，尝试破解
+    resp = client.download_url_web("a")
+    if not resp["state"] and ('code' in resp and resp["code"] == 911):
+        print("出现验证码，尝试破解")
+        while not crack_captcha(client):
+            print("破解失败，再次尝试")
+        print("破解成功")
+    else:
+        print("没有检测到需要验证码")
+
+
+# 程序开始时立即执行一次
+check_and_crack_captcha()
+
+while True:
+    # 每 15 分钟检测一次
+    time.sleep(15 * 60)
+    check_and_crack_captcha()
