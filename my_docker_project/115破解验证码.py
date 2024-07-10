@@ -6,9 +6,13 @@ from collections import defaultdict
 from concurrenttools import thread_pool_batch
 
 # 从环境变量获取 cookie
-cookie = os.getenv("P115_COOKIE", "default_value")
+cookie = os.getenv("P115_COOKIE")
+
+if not cookie:
+    raise ValueError("环境变量 P115_COOKIE 未设置或为空")
 
 client = P115Client(cookie)  # 使用cookie创建115网盘客户端
+
 
 def crack_captcha(
     client: str | P115Client, 
