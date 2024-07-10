@@ -1,12 +1,12 @@
+import os
 import time
 from p115 import P115Client
 from typing import Callable, cast
 from collections import defaultdict
 from concurrenttools import thread_pool_batch
 
-# 需填写内容
-# 传入 cookie
-cookie = "UID="
+# 从环境变量获取 cookie
+cookie = os.getenv("P115_COOKIE", "default_value")
 
 client = P115Client(cookie)  # 使用cookie创建115网盘客户端
 
