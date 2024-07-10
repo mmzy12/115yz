@@ -13,7 +13,6 @@ if not cookie:
 
 client = P115Client(cookie)  # 使用cookie创建115网盘客户端
 
-
 def crack_captcha(
     client: str | P115Client, 
     sample_count: int = 16, 
