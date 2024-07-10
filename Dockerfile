@@ -8,10 +8,7 @@ WORKDIR /app
 COPY . /app
 
 # 安装依赖库
-RUN pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir -U python-115 && \
-    pip install --no-cache-dir -U ddddocr==1.4.11 && \
-    pip install --no-cache-dir -U concurrenttools
+RUN pip install -U python-115
 
 # 声明环境变量 P115_COOKIE
 ENV P115_COOKIE=${P115_COOKIE}
