@@ -71,7 +71,12 @@ def check_and_crack_captcha():
 # 程序开始时立即执行一次
 check_and_crack_captcha()
 
+import time
+
+# 其他代码保持不变...
+
 while True:
-    # 每 15 分钟检测一次
-    time.sleep(15 * 60)
     check_and_crack_captcha()
+    # 每 5 分钟检测一次
+    time.sleep(5 * 60)
+
