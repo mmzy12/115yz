@@ -1,9 +1,13 @@
 import os
 import time
+import logging
 from p115 import P115Client
 from typing import Callable, cast
 from collections import defaultdict
 from concurrenttools import thread_pool_batch
+
+# 配置日志记录
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # 从环境变量获取 cookie
 cookie = os.getenv("P115_COOKIE")
@@ -57,26 +61,21 @@ def crack_captcha(
     return resp["state"]
 
 def check_and_crack_captcha():
-    # 检测是否存在验证码，如果存在，尝试破解
+    logging.info("开始检测和破解验证码")
     resp = client.download_url_web("a")
     if not resp["state"] and ('code' in resp and resp["code"] == 911):
-        print("出现验证码，尝试破解")
+        logging.info("出现验证码，尝试破解")
         while not crack_captcha(client):
-            print("破解失败，再次尝试")
-        print("破解成功")
+            logging.error("破解失败，再次尝试")
+        logging.info("破解成功")
     else:
-        print("没有检测到需要验证码")
+        logging.info("没有检测到需要验证码")
 
-
-# 程序开始时立即执行一次
+# 程序开始时执行一次
+logging.info("程序开始运行")
 check_and_crack_captcha()
 
-import time
-
-# 其他代码保持不变...
-
 while True:
-    check_and_crack_captcha()
     # 每 5 分钟检测一次
     time.sleep(5 * 60)
-
+    check_and_crack_captcha()
